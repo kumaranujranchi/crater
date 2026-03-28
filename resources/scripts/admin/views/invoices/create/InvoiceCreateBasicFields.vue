@@ -1,5 +1,5 @@
 <template>
-  <div class="grid grid-cols-12 gap-8 mt-6 mb-8">
+  <div class="grid grid-cols-12 gap-4 md:gap-8 mt-6 mb-8">
     <BaseCustomerSelectPopup
       v-model="invoiceStore.newInvoice.customer"
       :valid="v.customer_id"

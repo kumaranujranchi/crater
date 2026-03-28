@@ -1,7 +1,8 @@
 <template>
   <div>
-    <!-- Scan Button -->
+    <!-- Scan Button (hidden when used via ref from parent) -->
     <button
+      v-if="!hideButton"
       type="button"
       class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary-500 border border-primary-400 rounded-md hover:bg-primary-50 transition"
       @click="openScanner"
@@ -59,6 +60,9 @@
 import { ref, watch, nextTick } from 'vue'
 import { BrowserMultiFormatReader } from '@zxing/browser'
 
+const props = defineProps({
+  hideButton: { type: Boolean, default: false },
+})
 const emit = defineEmits(['scanned'])
 
 const isOpen = ref(false)
@@ -136,6 +140,8 @@ function closeScanner() {
   scanning.value = false
   isOpen.value = false
 }
+
+defineExpose({ openScanner })
 </script>
 
 <style scoped>

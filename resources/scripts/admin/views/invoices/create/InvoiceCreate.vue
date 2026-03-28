@@ -10,7 +10,7 @@
     :customer="invoiceStore.newInvoice.customer"
   />
 
-  <BasePage class="relative invoice-create-page">
+  <BasePage class="relative invoice-create-page pb-20 lg:pb-0">
     <form @submit.prevent="submitForm">
       <BasePageHeader :title="pageTitle">
         <BaseBreadcrumb>
@@ -131,6 +131,22 @@
           />
         </div>
       </BaseScrollPane>
+
+      <!-- Sticky Save Bar (mobile only) -->
+      <div class="fixed bottom-0 left-0 right-0 z-40 p-4 bg-white border-t border-gray-200 shadow-lg lg:hidden">
+        <BaseButton
+          :loading="isSaving"
+          :disabled="isSaving"
+          variant="primary"
+          type="submit"
+          class="w-full"
+        >
+          <template #left="slotProps">
+            <BaseIcon v-if="!isSaving" name="SaveIcon" :class="slotProps.class" />
+          </template>
+          {{ $t('invoices.save_invoice') }}
+        </BaseButton>
+      </div>
     </form>
   </BasePage>
 </template>
