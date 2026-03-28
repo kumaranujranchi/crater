@@ -1,7 +1,16 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    RewriteBase /
 
-    # Redirect all requests to the public/ folder
-    RewriteCond %{REQUEST_URI} !^/public/
-    RewriteRule ^(.*)$ /public/$1 [L,QSA]
+    # 1. Serve real files/directories from doc root directly (e.g. robots.txt)
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # 2. Serve static assets that exist inside public/ folder (JS, CSS, images etc.)
+    RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -f
+    RewriteRule ^(.+)$ /public/$1 [L,QSA]
+
+    # 3. All other requests go straight to Laravel's front controller
+    RewriteRule ^ /public/index.php [L,QSA]
 </IfModule>
