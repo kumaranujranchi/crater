@@ -36,6 +36,27 @@
               <BarcodeScanner @scanned="onBarcodeScanned" />
               <CustomFieldsManager ref="cfManagerRef" @vue:mounted="loadFieldTemplates" />
             </div>
+            <!-- Lookup status -->
+            <div v-if="lookupStatus" class="mt-2 flex items-center gap-2 text-xs rounded-md px-3 py-2"
+              :class="{
+                'bg-yellow-50 text-yellow-700': lookupStatus === 'loading',
+                'bg-green-50 text-green-700': lookupStatus === 'found',
+                'bg-gray-50 text-gray-500': lookupStatus === 'not_found',
+                'bg-red-50 text-red-600': lookupStatus === 'error',
+              }"
+            >
+              <svg v-if="lookupStatus === 'loading'" class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+              </svg>
+              <svg v-else-if="lookupStatus === 'found'" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+              </svg>
+              <svg v-else class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+              </svg>
+              {{ lookupMessage }}
+            </div>
           </BaseInputGroup>
 
           <BaseInputGroup
@@ -198,8 +219,9 @@ const userStore = useUserStore()
 const isSaving = ref(false)
 const cfManagerRef = ref(null)
 const STORAGE_KEY = 'synergy_item_custom_field_templates'
-
 const customFieldTemplates = ref([])
+const lookupStatus = ref('') // 'loading' | 'found' | 'not_found' | 'error' | ''
+const lookupMessage = ref('')
 
 function loadFieldTemplates() {
   try {
@@ -208,7 +230,6 @@ function loadFieldTemplates() {
   } catch {
     customFieldTemplates.value = []
   }
-  // Sync with currentItem.custom_fields — preserve existing values, add missing fields
   const existing = itemStore.currentItem.custom_fields || []
   itemStore.currentItem.custom_fields = customFieldTemplates.value.map((tpl) => {
     const found = existing.find((f) => f.key === tpl.key)
@@ -218,28 +239,78 @@ function loadFieldTemplates() {
 
 onMounted(() => {
   loadFieldTemplates()
-  // Re-sync whenever localStorage changes (e.g. user adds a field in manager)
   window.addEventListener('storage', loadFieldTemplates)
 })
 
-function onBarcodeScanned({ raw, parsed }) {
-  // Fill name
-  if (parsed && parsed.name) {
-    itemStore.currentItem.name = parsed.name
-  } else {
-    itemStore.currentItem.name = raw
+function applyItemData(name, description, priceInPaise) {
+  if (name) itemStore.currentItem.name = name
+  if (description) itemStore.currentItem.description = description
+  if (priceInPaise) itemStore.currentItem.price = priceInPaise
+  v$.value.currentItem.name.$touch()
+}
+
+async function onBarcodeScanned({ raw, parsed }) {
+  // Case 1: QR code with embedded JSON — use directly
+  if (parsed) {
+    applyItemData(
+      parsed.name,
+      parsed.description || parsed.brand || '',
+      parsed.price ? Math.round(parsed.price * 100) : null
+    )
+    // Auto-fill custom fields too
+    itemStore.currentItem.custom_fields = itemStore.currentItem.custom_fields.map((field) =>
+      parsed[field.key] !== undefined ? { ...field, value: String(parsed[field.key]) } : field
+    )
+    lookupStatus.value = 'found'
+    lookupMessage.value = 'Barcode se details mil gayi'
+    return
   }
+
+  // Plain barcode number — put it in name first so form isn't empty
+  itemStore.currentItem.name = raw
   v$.value.currentItem.name.$touch()
 
-  // Auto-fill custom fields if QR contained JSON with matching keys
-  if (parsed) {
-    itemStore.currentItem.custom_fields = itemStore.currentItem.custom_fields.map((field) => {
-      if (parsed[field.key] !== undefined) {
-        return { ...field, value: String(parsed[field.key]) }
+  // Case 2: Search in Crater's own item database first
+  lookupStatus.value = 'loading'
+  lookupMessage.value = 'Product details dhoondh rahe hain...'
+  try {
+    const localRes = await itemStore.fetchItems({ search: raw, limit: 5 })
+    const match = itemStore.items.find(
+      (i) => i.name === raw || (i.description && i.description.includes(raw))
+    )
+    if (match) {
+      applyItemData(match.name, match.description, match.price)
+      lookupStatus.value = 'found'
+      lookupMessage.value = `"${match.name}" — aapke database se mili`
+      return
+    }
+  } catch (_) {}
+
+  // Case 3: Open Food Facts free API (works for EAN-8 / EAN-13 / UPC barcodes)
+  try {
+    const res = await fetch(
+      `https://world.openfoodfacts.org/api/v0/product/${encodeURIComponent(raw)}.json`,
+      { signal: AbortSignal.timeout(8000) }
+    )
+    if (res.ok) {
+      const data = await res.json()
+      if (data.status === 1 && data.product) {
+        const p = data.product
+        const name = p.product_name || p.product_name_en || raw
+        const brand = p.brands || ''
+        const qty = p.quantity || ''
+        const desc = [brand, qty].filter(Boolean).join(' — ')
+        applyItemData(name, desc, null)
+        lookupStatus.value = 'found'
+        lookupMessage.value = `"${name}" — Open Food Facts se mili`
+        return
       }
-      return field
-    })
-  }
+    }
+  } catch (_) {}
+
+  // Nothing found
+  lookupStatus.value = 'not_found'
+  lookupMessage.value = `Barcode ${raw} — koi details nahi mili. Manually bharo.`
 }
 const taxPerItem = ref(companyStore.selectedCompanySettings.tax_per_item)
 
