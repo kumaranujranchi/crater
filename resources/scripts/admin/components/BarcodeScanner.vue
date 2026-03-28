@@ -73,7 +73,18 @@ async function startScan() {
     codeReader = new BrowserMultiFormatReader()
     controls = await codeReader.decodeFromVideoDevice(undefined, videoEl.value, (result, err) => {
       if (result) {
-        emit('scanned', result.getText())
+        const text = result.getText()
+        // Try to parse as JSON (QR codes can contain structured data)
+        let parsed = null
+        try {
+          const obj = JSON.parse(text)
+          if (typeof obj === 'object' && obj !== null) {
+            parsed = obj
+          }
+        } catch {
+          // Not JSON — plain barcode string
+        }
+        emit('scanned', { raw: text, parsed })
         closeScanner()
       }
     })

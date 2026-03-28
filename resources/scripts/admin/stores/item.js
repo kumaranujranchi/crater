@@ -27,6 +27,7 @@ export const useItemStore = (useWindow = false) => {
         unit: null,
         taxes: [],
         tax_per_item: false,
+        custom_fields: [],
       },
     }),
     getters: {
@@ -41,6 +42,7 @@ export const useItemStore = (useWindow = false) => {
           unit_id: '',
           unit: null,
           taxes: [],
+          custom_fields: [],
         }
       },
       fetchItems(params) {

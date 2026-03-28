@@ -15,6 +15,7 @@ class Item extends Model
 
     protected $casts = [
         'price' => 'integer',
+        'custom_fields' => 'array',
     ];
 
     protected $appends = [

@@ -36,6 +36,10 @@ class ItemsRequest extends FormRequest
             'description' => [
                 'nullable',
             ],
+            'custom_fields' => [
+                'nullable',
+                'array',
+            ],
         ];
     }
 }

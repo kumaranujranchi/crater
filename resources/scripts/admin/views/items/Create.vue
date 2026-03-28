@@ -32,8 +32,9 @@
               :invalid="v$.currentItem.name.$error"
               @input="v$.currentItem.name.$touch()"
             />
-            <div class="mt-2">
+            <div class="mt-2 flex items-center gap-3 flex-wrap">
               <BarcodeScanner @scanned="onBarcodeScanned" />
+              <CustomFieldsManager ref="cfManagerRef" @vue:mounted="loadFieldTemplates" />
             </div>
           </BaseInputGroup>
 
@@ -112,6 +113,33 @@
             />
           </BaseInputGroup>
 
+          <!-- Custom Fields Section -->
+          <div v-if="customFieldTemplates.length > 0">
+            <p class="text-sm font-semibold text-gray-700 mb-3">
+              Additional Details
+            </p>
+            <div class="space-y-3">
+              <div
+                v-for="(field, idx) in itemStore.currentItem.custom_fields"
+                :key="field.key"
+              >
+                <label class="block text-xs font-medium text-gray-600 mb-1">{{ field.label }}</label>
+                <textarea
+                  v-if="field.type === 'textarea'"
+                  v-model="field.value"
+                  rows="2"
+                  class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-300"
+                />
+                <input
+                  v-else
+                  v-model="field.value"
+                  :type="field.type"
+                  class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-300"
+                />
+              </div>
+            </div>
+          </div>
+
           <div>
             <BaseButton
               :content-loading="isFetchingInitialData"
@@ -136,7 +164,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import {
@@ -154,6 +182,7 @@ import { useTaxTypeStore } from '@/scripts/admin/stores/tax-type'
 import { useModalStore } from '@/scripts/stores/modal'
 import ItemUnitModal from '@/scripts/admin/components/modal-components/ItemUnitModal.vue'
 import BarcodeScanner from '@/scripts/admin/components/BarcodeScanner.vue'
+import CustomFieldsManager from '@/scripts/admin/components/CustomFieldsManager.vue'
 import { useUserStore } from '@/scripts/admin/stores/user'
 import abilities from '@/scripts/admin/stub/abilities'
 
@@ -167,10 +196,50 @@ const router = useRouter()
 const userStore = useUserStore()
 
 const isSaving = ref(false)
+const cfManagerRef = ref(null)
+const STORAGE_KEY = 'synergy_item_custom_field_templates'
 
-function onBarcodeScanned(value) {
-  itemStore.currentItem.name = value
+const customFieldTemplates = ref([])
+
+function loadFieldTemplates() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    customFieldTemplates.value = saved ? JSON.parse(saved) : []
+  } catch {
+    customFieldTemplates.value = []
+  }
+  // Sync with currentItem.custom_fields — preserve existing values, add missing fields
+  const existing = itemStore.currentItem.custom_fields || []
+  itemStore.currentItem.custom_fields = customFieldTemplates.value.map((tpl) => {
+    const found = existing.find((f) => f.key === tpl.key)
+    return { key: tpl.key, label: tpl.label, type: tpl.type, value: found ? found.value : '' }
+  })
+}
+
+onMounted(() => {
+  loadFieldTemplates()
+  // Re-sync whenever localStorage changes (e.g. user adds a field in manager)
+  window.addEventListener('storage', loadFieldTemplates)
+})
+
+function onBarcodeScanned({ raw, parsed }) {
+  // Fill name
+  if (parsed && parsed.name) {
+    itemStore.currentItem.name = parsed.name
+  } else {
+    itemStore.currentItem.name = raw
+  }
   v$.value.currentItem.name.$touch()
+
+  // Auto-fill custom fields if QR contained JSON with matching keys
+  if (parsed) {
+    itemStore.currentItem.custom_fields = itemStore.currentItem.custom_fields.map((field) => {
+      if (parsed[field.key] !== undefined) {
+        return { ...field, value: String(parsed[field.key]) }
+      }
+      return field
+    })
+  }
 }
 const taxPerItem = ref(companyStore.selectedCompanySettings.tax_per_item)
 
