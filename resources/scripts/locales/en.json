@@ -12,13 +12,15 @@
     "settings": "Settings",
     "logout": "Logout",
     "users": "Users",
-    "modules": "Modules"
+    "modules": "Modules",
+    "menu": "Menu"
   },
   "general": {
     "add_company": "Add Company",
     "view_pdf": "View PDF",
     "copy_pdf_url": "Copy PDF Url",
     "download_pdf": "Download PDF",
+    "print": "Print",
     "save": "Save",
     "create": "Create",
     "cancel": "Cancel",
@@ -361,6 +363,7 @@
     "title": "Invoices",
     "download": "Download",
     "pay_invoice": "Pay Invoice",
+    "print_invoice": "Print Invoice",
     "invoices_list": "Invoices List",
     "invoice_information": "Invoice Information",
     "days": "{days} Days",

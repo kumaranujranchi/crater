@@ -99,6 +99,15 @@
       {{ $t('invoices.clone_invoice') }}
     </BaseDropdownItem>
 
+    <!-- Print Invoice -->
+    <BaseDropdownItem @click="openPrintModal(row)">
+      <BaseIcon
+        name="PrinterIcon"
+        class="w-5 h-5 mr-3 text-gray-400 group-hover:text-gray-500"
+      />
+      {{ $t('general.print') }}
+    </BaseDropdownItem>
+
     <!--  Delete Invoice  -->
     <BaseDropdownItem
       v-if="userStore.hasAbilities(abilities.DELETE_INVOICE)"
@@ -245,6 +254,15 @@ async function sendInvoice(invoice) {
     id: invoice.id,
     data: invoice,
     variant: 'sm',
+  })
+}
+
+function openPrintModal(invoice) {
+  modalStore.openModal({
+    title: t('invoices.print_invoice'),
+    componentName: 'PrintInvoiceModal',
+    id: invoice.id,
+    data: invoice,
   })
 }
 

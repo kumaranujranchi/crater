@@ -6,12 +6,16 @@
 
     <SiteSidebar />
 
+    <MobileBottomNavigation />
+
+    <MobileFAB />
+
     <ExchangeRateBulkUpdateModal />
 
     <main
       class="h-screen h-screen-ios overflow-y-auto md:pl-56 xl:pl-64 min-h-0"
     >
-      <div class="pt-16 pb-16">
+      <div class="pt-16 pb-32 md:pb-16">
         <router-view />
       </div>
     </main>
@@ -32,6 +36,8 @@ import { useCompanyStore } from '@/scripts/admin/stores/company'
 
 import SiteHeader from '@/scripts/admin/layouts/partials/TheSiteHeader.vue'
 import SiteSidebar from '@/scripts/admin/layouts/partials/TheSiteSidebar.vue'
+import MobileBottomNavigation from './partials/MobileBottomNavigation.vue'
+import MobileFAB from './partials/MobileFAB.vue'
 import NotificationRoot from '@/scripts/components/notifications/NotificationRoot.vue'
 import ExchangeRateBulkUpdateModal from '@/scripts/admin/components/modal-components/ExchangeRateBulkUpdateModal.vue'
 

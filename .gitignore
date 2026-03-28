@@ -8,13 +8,14 @@
 Homestead.json
 Homestead.yaml
 .env
+.env.backup
 .phpunit.result.cache
 .rnd
 /.expo
 /.vscode
-/docker-compose/db/data/
 .gitkeep
 /public/docs
 /.scribe
 !storage/fonts/.gitkeep
 .DS_Store
+build_log.txt

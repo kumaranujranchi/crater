@@ -66,3 +66,23 @@ html {
 .h-screen-ios {
     height: -webkit-fill-available;
 }
+
+/* Native Mobile App Feel */
+@media (max-width: 768px) {
+  /* Disable text selection and tap highlights */
+  * {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
+
+  /* Allow selection for inputs and textareas */
+  input, textarea {
+    user-select: text;
+  }
+
+  /* Safe Area Support */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}

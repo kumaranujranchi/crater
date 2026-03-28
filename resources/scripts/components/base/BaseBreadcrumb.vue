@@ -1,5 +1,5 @@
 <template>
-  <nav>
+  <nav class="hidden md:flex">
     <ol class="flex flex-wrap py-4 text-gray-900 rounded list-reset">
       <slot />
     </ol>

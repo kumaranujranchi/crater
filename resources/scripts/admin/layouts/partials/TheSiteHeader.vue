@@ -41,7 +41,8 @@
     <div
       :class="{ 'is-active': globalStore.isSidebarOpen }"
       class="
-        flex
+        hidden
+        md:hidden
         float-left
         p-1
         overflow-visible
@@ -51,7 +52,7 @@
         border-0
         rounded
         cursor-pointer
-        md:hidden md:ml-0
+        md:ml-0
         hover:bg-gray-100
       "
       @click.prevent="onToggle"

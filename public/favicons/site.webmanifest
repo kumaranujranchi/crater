@@ -1,6 +1,11 @@
 {
-    "name": "",
-    "short_name": "",
+    "name": "Crater",
+    "short_name": "Crater",
+    "description": "Open Source Invoicing Platform",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#5851d8",
     "icons": [
         {
             "src": "/favicons/android-chrome-192x192.png",
@@ -12,8 +17,5 @@
             "sizes": "256x256",
             "type": "image/png"
         }
-    ],
-    "theme_color": "#ffffff",
-    "background_color": "#ffffff",
-    "display": "standalone"
+    ]
 }

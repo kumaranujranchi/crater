@@ -10,6 +10,7 @@ import { useUserStore } from '@/scripts/admin/stores/user'
 import { useDialogStore } from '@/scripts/stores/dialog'
 
 import SendInvoiceModal from '@/scripts/admin/components/modal-components/SendInvoiceModal.vue'
+import PrintInvoiceModal from '@/scripts/admin/components/modal-components/PrintInvoiceModal.vue'
 import InvoiceDropdown from '@/scripts/admin/components/dropdowns/InvoiceIndexDropdown.vue'
 import LoadingIcon from '@/scripts/components/icons/LoadingIcon.vue'
 
@@ -100,6 +101,15 @@ async function onSendInvoice(id) {
   modalStore.openModal({
     title: t('invoices.send_invoice'),
     componentName: 'SendInvoiceModal',
+    id: invoiceData.value.id,
+    data: invoiceData.value,
+  })
+}
+
+function onPrintInvoice() {
+  modalStore.openModal({
+    title: t('invoices.print_invoice'),
+    componentName: 'PrintInvoiceModal',
     id: invoiceData.value.id,
     data: invoiceData.value,
   })
@@ -230,6 +240,7 @@ onSearched = debounce(onSearched, 500)
 
 <template>
   <SendInvoiceModal @update="updateSentInvoice" />
+  <PrintInvoiceModal />
 
   <BasePage v-if="invoiceData" class="xl:pl-96 xl:ml-8">
     <BasePageHeader :title="pageTitle">
@@ -274,6 +285,20 @@ onSearched = debounce(onSearched, 500)
             {{ $t('invoices.record_payment') }}
           </BaseButton>
         </router-link>
+
+        <BaseButton
+          variant="primary-outline"
+          class="text-sm ml-3"
+          @click="onPrintInvoice"
+        >
+          <template #left="slotProps">
+            <BaseIcon
+              :class="slotProps.class"
+              name="PrinterIcon"
+            />
+          </template>
+          {{ $t('general.print') }}
+        </BaseButton>
 
         <!-- Invoice Dropdown  -->
         <InvoiceDropdown
