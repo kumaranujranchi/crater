@@ -2,10 +2,24 @@
   <!-- Barcode Scanner Modal -->
   <BarcodeScanner ref="scannerRef" hide-button @scanned="onBarcodeScanned" />
 
-  <!-- Mobile scroll wrapper -->
-  <div class="overflow-x-auto w-full">
-    <table class="text-center item-table min-w-full">
-    <colgroup>
+  <!-- Mobile section label -->
+  <div class="lg:hidden flex items-center justify-between px-4 pt-4 pb-2">
+    <p class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ $tc('items.item', 2) }}</p>
+    <button
+      type="button"
+      class="flex items-center gap-1.5 text-sm font-medium text-primary-500"
+      @click="openBarcodeScanner"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m0 14v1M4 12H3m18 0h-1M6.343 6.343l-.707-.707m12.728 12.728l-.707-.707M6.343 17.657l-.707.707M17.657 6.343l-.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
+      </svg>
+      Scan
+    </button>
+  </div>
+
+  <!-- Items table (mobile: block/card, desktop: table) -->
+  <table class="text-center item-table w-full">
+    <colgroup class="hidden lg:table-column-group">
       <col style="width: 40%; min-width: 280px" />
       <col style="width: 10%; min-width: 120px" />
       <col style="width: 15%; min-width: 120px" />
@@ -15,103 +29,40 @@
       />
       <col style="width: 15%; min-width: 120px" />
     </colgroup>
-    <thead class="bg-white border border-gray-200 border-solid">
+    <thead class="hidden lg:table-header-group bg-white border border-gray-200 border-solid">
       <tr>
-        <th
-          class="
-            px-5
-            py-3
-            text-sm
-            not-italic
-            font-medium
-            leading-5
-            text-left text-gray-700
-            border-t border-b border-gray-200 border-solid
-          "
-        >
+        <th class="px-5 py-3 text-sm not-italic font-medium leading-5 text-left text-gray-700 border-t border-b border-gray-200 border-solid">
           <BaseContentPlaceholders v-if="isLoading">
             <BaseContentPlaceholdersText :lines="1" class="w-16 h-5" />
           </BaseContentPlaceholders>
-          <span v-else class="pl-7">
-            {{ $tc('items.item', 2) }}
-          </span>
+          <span v-else class="pl-7">{{ $tc('items.item', 2) }}</span>
         </th>
-        <th
-          class="
-            px-5
-            py-3
-            text-sm
-            not-italic
-            font-medium
-            leading-5
-            text-right text-gray-700
-            border-t border-b border-gray-200 border-solid
-          "
-        >
+        <th class="px-5 py-3 text-sm not-italic font-medium leading-5 text-right text-gray-700 border-t border-b border-gray-200 border-solid">
           <BaseContentPlaceholders v-if="isLoading">
             <BaseContentPlaceholdersText :lines="1" class="w-16 h-5" />
           </BaseContentPlaceholders>
-          <span v-else>
-            {{ $t('invoices.item.quantity') }}
-          </span>
+          <span v-else>{{ $t('invoices.item.quantity') }}</span>
         </th>
-        <th
-          class="
-            px-5
-            py-3
-            text-sm
-            not-italic
-            font-medium
-            leading-5
-            text-left text-gray-700
-            border-t border-b border-gray-200 border-solid
-          "
-        >
+        <th class="px-5 py-3 text-sm not-italic font-medium leading-5 text-left text-gray-700 border-t border-b border-gray-200 border-solid">
           <BaseContentPlaceholders v-if="isLoading">
             <BaseContentPlaceholdersText :lines="1" class="w-16 h-5" />
           </BaseContentPlaceholders>
-          <span v-else>
-            {{ $t('invoices.item.price') }}
-          </span>
+          <span v-else>{{ $t('invoices.item.price') }}</span>
         </th>
         <th
           v-if="store[storeProp].discount_per_item === 'YES'"
-          class="
-            px-5
-            py-3
-            text-sm
-            not-italic
-            font-medium
-            leading-5
-            text-left text-gray-700
-            border-t border-b border-gray-200 border-solid
-          "
+          class="px-5 py-3 text-sm not-italic font-medium leading-5 text-left text-gray-700 border-t border-b border-gray-200 border-solid"
         >
           <BaseContentPlaceholders v-if="isLoading">
             <BaseContentPlaceholdersText :lines="1" class="w-16 h-5" />
           </BaseContentPlaceholders>
-          <span v-else>
-            {{ $t('invoices.item.discount') }}
-          </span>
+          <span v-else>{{ $t('invoices.item.discount') }}</span>
         </th>
-        <th
-          class="
-            px-5
-            py-3
-            text-sm
-            not-italic
-            font-medium
-            leading-5
-            text-right text-gray-700
-            border-t border-b border-gray-200 border-solid
-          "
-        >
+        <th class="px-5 py-3 text-sm not-italic font-medium leading-5 text-right text-gray-700 border-t border-b border-gray-200 border-solid">
           <BaseContentPlaceholders v-if="isLoading">
             <BaseContentPlaceholdersText :lines="1" class="w-16 h-5" />
           </BaseContentPlaceholders>
-          <span v-else class="pr-10 column-heading">
-            {{ $t('invoices.item.amount') }}
-          </span>
+          <span v-else class="pr-10 column-heading">{{ $t('invoices.item.amount') }}</span>
         </th>
       </tr>
     </thead>
@@ -136,38 +87,31 @@
       </template>
     </draggable>
   </table>
-  </div>
 
-  <!-- Add Item Row -->
-  <div class="flex items-center border border-t-0 border-gray-200 border-solid">
+  <!-- Add Item / Scan row -->
+  <div class="flex items-center border border-t-0 border-gray-200 border-solid rounded-b-lg overflow-hidden">
+    <!-- Add manually -->
     <div
-      class="
-        flex flex-1
-        items-center
-        justify-center
-        px-6
-        py-3
-        text-base
-        cursor-pointer
-        text-primary-400
-        hover:bg-primary-100
-      "
+      class="flex flex-1 items-center justify-center px-4 py-3 text-sm cursor-pointer text-primary-400 hover:bg-primary-50 transition font-medium"
       @click="store.addItem"
     >
-      <BaseIcon name="PlusCircleIcon" class="mr-2" />
+      <BaseIcon name="PlusCircleIcon" class="mr-2 h-5 w-5" />
       {{ $t('general.add_new_item') }}
     </div>
 
-    <!-- Barcode scan to add item -->
+    <!-- Divider -->
+    <div class="w-px h-10 bg-gray-200 flex-shrink-0" />
+
+    <!-- Scan barcode -->
     <button
       type="button"
-      class="flex items-center gap-2 px-4 py-3 text-sm font-medium text-primary-500 border-l border-gray-200 hover:bg-primary-50 transition whitespace-nowrap"
+      class="flex items-center gap-2 px-4 py-3 text-sm font-medium text-primary-500 hover:bg-primary-50 transition whitespace-nowrap"
       @click="openBarcodeScanner"
     >
       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m0 14v1M4 12H3m18 0h-1M6.343 6.343l-.707-.707m12.728 12.728l-.707-.707M6.343 17.657l-.707.707M17.657 6.343l-.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
       </svg>
-      <span class="hidden sm:inline">Scan Item</span>
+      Scan
     </button>
   </div>
 
@@ -319,3 +263,18 @@ function addLineItem(name, description, price, itemId) {
   setTimeout(() => { scanStatus.value = '' }, 4000)
 }
 </script>
+
+<style scoped>
+@media (max-width: 1023px) {
+  table.item-table,
+  table.item-table > tbody {
+    display: block;
+    width: 100%;
+  }
+  table.item-table tbody tr,
+  table.item-table tbody td {
+    display: block;
+    width: 100%;
+  }
+}
+</style>

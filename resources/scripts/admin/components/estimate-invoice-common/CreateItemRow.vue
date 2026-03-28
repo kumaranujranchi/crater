@@ -1,7 +1,144 @@
 <template>
-  <tr class="box-border bg-white border border-gray-200 border-solid rounded-b">
-    <td colspan="5" class="p-0 text-left align-top">
-      <table class="w-full">
+  <tr class="box-border bg-white border border-gray-200 border-solid">
+    <td colspan="5" class="block lg:table-cell p-0 text-left align-top">
+
+      <!-- ═══════════════════════════════════════
+           MOBILE CARD LAYOUT  (hidden on lg+)
+      ════════════════════════════════════════ -->
+      <div class="lg:hidden">
+        <div class="p-3 space-y-3">
+
+          <!-- Row 1: drag handle + item search + delete -->
+          <div class="flex items-start gap-2">
+            <div class="flex-shrink-0 flex items-center justify-center w-6 h-8 mt-1 text-gray-300 cursor-move handle">
+              <DragIcon />
+            </div>
+            <div class="flex-1 min-w-0">
+              <BaseItemSelect
+                type="Invoice"
+                :item="itemData"
+                :invalid="v$.name.$error"
+                :invalid-description="v$.description.$error"
+                :taxes="itemData.taxes"
+                :index="index"
+                :store-prop="storeProp"
+                :store="store"
+                @search="searchVal"
+                @select="onSelectItem"
+              />
+            </div>
+            <button
+              v-if="showRemoveButton"
+              type="button"
+              class="flex-shrink-0 p-2 -mr-1 text-red-400 hover:text-red-600 transition"
+              @click="store.removeItem(index)"
+            >
+              <BaseIcon name="TrashIcon" class="h-5 w-5" />
+            </button>
+          </div>
+
+          <!-- Row 2: Qty / Price / Amount -->
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <p class="text-xs text-gray-500 mb-1 font-medium">{{ $t('invoices.item.quantity') }}</p>
+              <BaseInput
+                v-model="quantity"
+                :invalid="v$.quantity.$error"
+                :content-loading="loading"
+                type="number"
+                small
+                min="0"
+                step="any"
+                @change="syncItemToStore()"
+                @input="v$.quantity.$touch()"
+              />
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 mb-1 font-medium">{{ $t('invoices.item.price') }}</p>
+              <BaseMoney
+                :key="selectedCurrency"
+                v-model="price"
+                :invalid="v$.price.$error"
+                :content-loading="loading"
+                :currency="selectedCurrency"
+              />
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 mb-1 font-medium">{{ $t('invoices.item.amount') }}</p>
+              <div class="h-[38px] flex items-center">
+                <BaseContentPlaceholders v-if="loading">
+                  <BaseContentPlaceholdersText :lines="1" class="w-16 h-5" />
+                </BaseContentPlaceholders>
+                <span v-else class="text-sm font-semibold text-gray-800">
+                  <BaseFormatMoney :amount="total" :currency="selectedCurrency" />
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 3: Discount (if enabled) -->
+          <div v-if="store[storeProp].discount_per_item === 'YES'">
+            <p class="text-xs text-gray-500 mb-1 font-medium">{{ $t('invoices.item.discount') }}</p>
+            <div class="flex" style="max-width: 160px">
+              <BaseInput
+                v-model="discount"
+                :invalid="v$.discount_val.$error"
+                :content-loading="loading"
+                class="border-r-0 focus:border-r-2 rounded-tr-sm rounded-br-sm h-[38px]"
+              />
+              <BaseDropdown position="bottom-end">
+                <template #activator>
+                  <BaseButton
+                    :content-loading="loading"
+                    class="rounded-tr-md rounded-br-md !p-2 rounded-none"
+                    type="button"
+                    variant="white"
+                  >
+                    <span class="flex items-center">
+                      {{ itemData.discount_type == 'fixed' ? currency.symbol : '%' }}
+                      <BaseIcon name="ChevronDownIcon" class="w-4 h-4 ml-1 text-gray-500" />
+                    </span>
+                  </BaseButton>
+                </template>
+                <BaseDropdownItem @click="selectFixed">{{ $t('general.fixed') }}</BaseDropdownItem>
+                <BaseDropdownItem @click="selectPercentage">{{ $t('general.percentage') }}</BaseDropdownItem>
+              </BaseDropdown>
+            </div>
+          </div>
+
+          <!-- Row 4: Taxes (if enabled) -->
+          <div v-if="store[storeProp].tax_per_item === 'YES'">
+            <BaseContentPlaceholders v-if="loading">
+              <BaseContentPlaceholdersText :lines="1" class="w-24 h-8 border rounded-md" />
+            </BaseContentPlaceholders>
+            <ItemTax
+              v-for="(tax, index1) in itemData.taxes"
+              v-else
+              :key="tax.id"
+              :index="index1"
+              :item-index="index"
+              :tax-data="tax"
+              :taxes="itemData.taxes"
+              :discounted-total="total"
+              :total-tax="totalSimpleTax"
+              :total="subtotal"
+              :currency="currency"
+              :update-items="syncItemToStore"
+              :ability="abilities.CREATE_INVOICE"
+              :store="store"
+              :store-prop="storeProp"
+              :discount="discount"
+              @update="updateTax"
+            />
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════
+           DESKTOP TABLE LAYOUT  (hidden on mobile)
+      ════════════════════════════════════════ -->
+      <table class="hidden lg:table w-full">
         <colgroup>
           <col style="width: 40%; min-width: 280px" />
           <col style="width: 10%; min-width: 120px" />
@@ -17,7 +154,7 @@
             <td class="px-5 py-4 text-left align-top">
               <div class="flex justify-start">
                 <div
-                  class="flex items-center justify-center w-5 h-5 mt-2 mr-2 text-gray-300 cursor-move  handle"
+                  class="flex items-center justify-center w-5 h-5 mt-2 mr-2 text-gray-300 cursor-move handle"
                 >
                   <DragIcon />
                 </div>
@@ -94,7 +231,6 @@
                               ? currency.symbol
                               : '%'
                           }}
-
                           <BaseIcon
                             name="ChevronDownIcon"
                             class="w-4 h-4 ml-1 text-gray-500"
@@ -102,11 +238,9 @@
                         </span>
                       </BaseButton>
                     </template>
-
                     <BaseDropdownItem @click="selectFixed">
                       {{ $t('general.fixed') }}
                     </BaseDropdownItem>
-
                     <BaseDropdownItem @click="selectPercentage">
                       {{ $t('general.percentage') }}
                     </BaseDropdownItem>
@@ -120,7 +254,6 @@
                   <BaseContentPlaceholders v-if="loading">
                     <BaseContentPlaceholdersText :lines="1" class="w-16 h-5" />
                   </BaseContentPlaceholders>
-
                   <BaseFormatMoney
                     v-else
                     :amount="total"
@@ -147,7 +280,6 @@
                   class="w-24 h-8 border rounded-md"
                 />
               </BaseContentPlaceholders>
-
               <ItemTax
                 v-for="(tax, index1) in itemData.taxes"
                 v-else
@@ -171,6 +303,7 @@
           </tr>
         </tbody>
       </table>
+
     </td>
   </tr>
 </template>
