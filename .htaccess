@@ -2,15 +2,14 @@
     RewriteEngine On
     RewriteBase /
 
-    # Serve existing files/directories directly
-    RewriteCond %{REQUEST_FILENAME} -f [OR]
-    RewriteCond %{REQUEST_FILENAME} -d
+    # Serve actual files from root directly (e.g. robots.txt)
+    RewriteCond %{REQUEST_FILENAME} -f
     RewriteRule ^ - [L]
 
-    # Internal rewrite (no redirect) to public/ - no leading slash to avoid external redirect
+    # Serve static assets (js/css/images) from public/ folder - internal rewrite, no redirect
     RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -f
     RewriteRule ^(.*)$ public/$1 [L,QSA]
 
-    # Everything else → Laravel front controller (internal rewrite, NOT redirect)
-    RewriteRule ^ public/index.php [L,QSA]
+    # All other requests to root index.php (Laravel bootstrap)
+    RewriteRule ^ index.php [L]
 </IfModule>
