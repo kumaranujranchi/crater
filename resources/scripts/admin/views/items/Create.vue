@@ -32,6 +32,9 @@
               :invalid="v$.currentItem.name.$error"
               @input="v$.currentItem.name.$touch()"
             />
+            <div class="mt-2">
+              <BarcodeScanner @scanned="onBarcodeScanned" />
+            </div>
           </BaseInputGroup>
 
           <BaseInputGroup
@@ -150,6 +153,7 @@ import { useCompanyStore } from '@/scripts/admin/stores/company'
 import { useTaxTypeStore } from '@/scripts/admin/stores/tax-type'
 import { useModalStore } from '@/scripts/stores/modal'
 import ItemUnitModal from '@/scripts/admin/components/modal-components/ItemUnitModal.vue'
+import BarcodeScanner from '@/scripts/admin/components/BarcodeScanner.vue'
 import { useUserStore } from '@/scripts/admin/stores/user'
 import abilities from '@/scripts/admin/stub/abilities'
 
@@ -163,6 +167,11 @@ const router = useRouter()
 const userStore = useUserStore()
 
 const isSaving = ref(false)
+
+function onBarcodeScanned(value) {
+  itemStore.currentItem.name = value
+  v$.value.currentItem.name.$touch()
+}
 const taxPerItem = ref(companyStore.selectedCompanySettings.tax_per_item)
 
 let isFetchingInitialData = ref(false)

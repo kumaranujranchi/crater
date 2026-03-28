@@ -40,6 +40,8 @@
     "@vuelidate/core": "^2.0.0-alpha.32",
     "@vuelidate/validators": "^2.0.0-alpha.25",
     "@vueuse/core": "^6.0.0",
+    "@zxing/browser": "^0.1.5",
+    "@zxing/library": "^0.21.3",
     "axios": "^0.19",
     "chart.js": "^2.7.3",
     "guid": "0.0.12",
